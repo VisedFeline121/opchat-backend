@@ -61,9 +61,16 @@ clean:
 logs:
 	docker compose logs -f
 
-# Run pre-commit hooks (formats code automatically)
+# Run pre-commit hooks (check mode - doesn't modify files)
 lint:
 	python -m pre_commit run --all-files
+
+# Run linters in fix mode (modifies files)
+lint-fix:
+	ruff check . --fix
+	black .
+	isort .
+	mypy .
 
 # Run linters in check mode (CI safe)
 ci-lint:

@@ -1,0 +1,93 @@
+version: "3.8"
+services:
+    api:
+        build: .
+        command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+        environment:
+            - DATABASE_URL=postgresql://opchat:opchat@postgres:5432/opchat
+            - REDIS_URL=redis://redis:6379
+            - RABBITMQ_URL=amqp://opchat:opchat@rabbitmq:5672
+        ports:
+            - "8000:8000"
+        volumes:
+            - .:/app
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        restart: unless-stopped
+
+    ws-gateway:
+        build: .
+        command: ["python", "app/ws_gateway.py"]
+        environment:
+            - DATABASE_URL=postgresql://opchat:opchat@postgres:5432/opchat
+            - REDIS_URL=redis://redis:6379
+            - RABBITMQ_URL=amqp://opchat:opchat@rabbitmq:5672
+        ports:
+            - "8001:8001"
+        volumes:
+            - .:/app
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        restart: unless-stopped
+
+    postgres:
+        image: postgres:16-alpine
+        environment:
+            POSTGRES_DB: opchat
+            POSTGRES_USER: opchat
+            POSTGRES_PASSWORD: opchat
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U opchat -d opchat"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        restart: unless-stopped
+
+    redis:
+        image: redis:7-alpine
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis_data:/data
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        restart: unless-stopped
+
+    rabbitmq:
+        image: rabbitmq:3.12-management-alpine
+        environment:
+            RABBITMQ_DEFAULT_USER: opchat
+            RABBITMQ_DEFAULT_PASS: opchat
+        ports:
+            - "5672:5672"
+            - "15672:15672"  # Management UI
+        volumes:
+            - rabbitmq_data:/var/lib/rabbitmq
+        healthcheck:
+            test: ["CMD", "rabbitmq-diagnostics", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        restart: unless-stopped
+
+volumes:
+    postgres_data:
+    redis_data:
+    rabbitmq_data:

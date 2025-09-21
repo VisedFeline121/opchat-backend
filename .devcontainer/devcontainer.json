@@ -1,0 +1,82 @@
+{
+  "name": "OpChat Development",
+  "dockerComposeFile": "../docker-compose.yaml",
+  "service": "api",
+  "workspaceFolder": "/app",
+  "shutdownAction": "stopCompose",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "charliermarsh.ruff",
+        "ms-python.mypy-type-checker",
+        "ms-python.pytest",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.websocket-debugger"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.formatting.provider": "black",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.ruffEnabled": true,
+        "python.linting.mypyEnabled": true,
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestArgs": [
+          "tests"
+        ],
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true
+        },
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/*.pyc": true,
+          "**/.pytest_cache": true,
+          "**/.mypy_cache": true,
+          "**/migrations": true
+        }
+      }
+    }
+  },
+  
+  "postCreateCommand": "pip install -r requirements-dev.txt",
+  
+  "forwardPorts": [8000, 8001, 5432, 6379, 5672, 15672],
+  
+  "portsAttributes": {
+    "8000": {
+      "label": "FastAPI API",
+      "onAutoForward": "notify"
+    },
+    "8001": {
+      "label": "WebSocket Gateway",
+      "onAutoForward": "notify"
+    },
+    "5432": {
+      "label": "PostgreSQL"
+    },
+    "6379": {
+      "label": "Redis"
+    },
+    "5672": {
+      "label": "RabbitMQ"
+    },
+    "15672": {
+      "label": "RabbitMQ Management"
+    }
+  },
+  
+  "remoteUser": "app"
+}

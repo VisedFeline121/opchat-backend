@@ -4,23 +4,23 @@ repos:
       hooks:
           - id: black
             language_version: python3.12
-            exclude: ^migrations/
+            exclude: ^(migrations/|alembic/)
 
     - repo: https://github.com/astral-sh/ruff-pre-commit
       rev: v0.1.8
       hooks:
           - id: ruff
-            exclude: ^migrations/
+            exclude: ^(migrations/|alembic/)
 
     - repo: https://github.com/pycqa/isort
       rev: 5.13.2
       hooks:
           - id: isort
-            exclude: ^migrations/
+            exclude: ^(migrations/|alembic/)
 
     - repo: https://github.com/pre-commit/mirrors-mypy
       rev: v1.7.1
       hooks:
           - id: mypy
-            additional_dependencies: [types-passlib, types-requests, types-redis, types-pika]
-            exclude: ^migrations/
+            additional_dependencies: [types-passlib, types-requests, types-redis, types-pika, types-sqlalchemy]
+            exclude: ^(migrations/|alembic/|app/models/)

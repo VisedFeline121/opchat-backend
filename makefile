@@ -119,10 +119,10 @@ lint-fix:
 
 # Run linters in check mode (CI safe)
 ci-lint:
-	ruff check .
-	black --check .
-	isort --check-only .
-	mypy .
+	ruff check . --exclude alembic --exclude migrations
+	black --check . --exclude "(alembic|migrations)"
+	isort --check-only . --skip-glob "alembic/*" --skip-glob "migrations/*"
+	mypy . --show-error-codes
 
 # Run security checks locally (requires dev dependencies)
 security:

@@ -23,4 +23,4 @@ repos:
       hooks:
           - id: mypy
             additional_dependencies: [types-passlib, types-requests, types-redis, types-pika, types-sqlalchemy]
-            exclude: ^(migrations/|alembic/)
+            exclude: ^(migrations/|alembic/|app/models/)

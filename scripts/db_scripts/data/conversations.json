@@ -1,0 +1,108 @@
+[
+  {
+    "type": "dm",
+    "participants": ["alice", "bob"],
+    "messages": [
+      {
+        "sender": "alice",
+        "content": "Hey Bob! How's the new project going?",
+        "timestamp_offset_minutes": -120
+      },
+      {
+        "sender": "bob", 
+        "content": "Going well! Just finished the initial setup. How about yours?",
+        "timestamp_offset_minutes": -115
+      },
+      {
+        "sender": "alice",
+        "content": "Making good progress. Let me know if you need any help!",
+        "timestamp_offset_minutes": -110
+      }
+    ]
+  },
+  {
+    "type": "dm",
+    "participants": ["charlie", "diana"],
+    "messages": [
+      {
+        "sender": "charlie",
+        "content": "Diana, did you see the meeting notes from yesterday?",
+        "timestamp_offset_minutes": -90
+      },
+      {
+        "sender": "diana",
+        "content": "Yes! The new requirements look interesting. We should discuss them.",
+        "timestamp_offset_minutes": -85
+      },
+      {
+        "sender": "charlie",
+        "content": "Absolutely. How about a call tomorrow morning?",
+        "timestamp_offset_minutes": -80
+      },
+      {
+        "sender": "diana",
+        "content": "Perfect! 10 AM works for me.",
+        "timestamp_offset_minutes": -75
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "topic": "Development Team",
+    "participants": ["alice", "bob", "charlie"],
+    "messages": [
+      {
+        "sender": "alice",
+        "content": "Good morning team! Ready for today's sprint?",
+        "timestamp_offset_minutes": -60
+      },
+      {
+        "sender": "bob",
+        "content": "Ready to go! I've got the database migrations prepared.",
+        "timestamp_offset_minutes": -58
+      },
+      {
+        "sender": "charlie",
+        "content": "API endpoints are tested and ready for deployment.",
+        "timestamp_offset_minutes": -55
+      },
+      {
+        "sender": "alice",
+        "content": "Excellent work everyone! Let's ship it.",
+        "timestamp_offset_minutes": -50
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "topic": "Product Planning",
+    "participants": ["diana", "eve", "alice"],
+    "messages": [
+      {
+        "sender": "diana",
+        "content": "I've drafted the product roadmap for Q2. Thoughts?",
+        "timestamp_offset_minutes": -40
+      },
+      {
+        "sender": "eve",
+        "content": "Looks comprehensive! I especially like the user experience improvements.",
+        "timestamp_offset_minutes": -35
+      },
+      {
+        "sender": "alice",
+        "content": "The timeline seems realistic. Should we add mobile support?",
+        "timestamp_offset_minutes": -30
+      },
+      {
+        "sender": "diana",
+        "content": "Great idea! I'll add that to the backlog.",
+        "timestamp_offset_minutes": -25
+      },
+      {
+        "sender": "eve",
+        "content": "Perfect. This should give us good direction for the quarter.",
+        "timestamp_offset_minutes": -20
+      }
+    ]
+  }
+]

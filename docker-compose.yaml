@@ -4,7 +4,8 @@ services:
         build: .
         command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
         environment:
-            - DATABASE_URL=postgresql://opchat:opchat@postgres:5432/opchat
+            - DATABASE_URL=postgresql://opchat_migration:opchat_migration_pass@postgres:5432/opchat
+            - APP_DATABASE_URL=postgresql://opchat_app:opchat_app_pass@postgres:5432/opchat
             - REDIS_URL=redis://redis:6379
             - RABBITMQ_URL=amqp://opchat:opchat@rabbitmq:5672
         ports:
@@ -24,7 +25,8 @@ services:
         build: .
         command: ["python", "app/ws_gateway.py"]
         environment:
-            - DATABASE_URL=postgresql://opchat:opchat@postgres:5432/opchat
+            - DATABASE_URL=postgresql://opchat_migration:opchat_migration_pass@postgres:5432/opchat
+            - APP_DATABASE_URL=postgresql://opchat_app:opchat_app_pass@postgres:5432/opchat
             - REDIS_URL=redis://redis:6379
             - RABBITMQ_URL=amqp://opchat:opchat@rabbitmq:5672
         ports:
@@ -40,12 +42,33 @@ services:
                 condition: service_healthy
         restart: unless-stopped
 
+    system:
+        build: .
+        volumes:
+            - .:/app
+        environment:
+            - DATABASE_URL=postgresql://opchat_migration:opchat_migration_pass@postgres:5432/opchat
+            - APP_DATABASE_URL=postgresql://opchat_app:opchat_app_pass@postgres:5432/opchat
+            - ADMIN_DATABASE_URL=postgresql://opchat:opchat@postgres:5432/opchat
+            - REDIS_URL=redis://redis:6379
+            - RABBITMQ_URL=amqp://opchat:opchat@rabbitmq:5672
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        working_dir: /app
+        command: tail -f /dev/null
+
     postgres:
         image: postgres:16-alpine
         environment:
             POSTGRES_DB: opchat
             POSTGRES_USER: opchat
             POSTGRES_PASSWORD: opchat
+            POSTGRES_INITDB_ARGS: "--auth-host=md5"
         ports:
             - "5432:5432"
         volumes:

@@ -1,42 +1,46 @@
-"""
-OpChat Backend - Main FastAPI Application
+"""OpChat Backend main application."""
 
-This is a minimal FastAPI application for testing Docker setup.
-Real implementation will be added incrementally.
-"""
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.logging import get_logger, log_startup_info, setup_logging
+
+# Initialize logging first
+setup_logging()
+
+# Get logger after setup
+logger = get_logger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan handler."""
+    # Startup
+    log_startup_info()
+    logger.info("FastAPI application started successfully")
+    yield
+    # Shutdown
+    logger.info("FastAPI application shutting down")
+
 
 app = FastAPI(
-    title="OpChat API",
+    title="OpChat Backend",
     description="Real-time messaging backend",
     version="0.1.0",
-)
-
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # TODO: Restrict in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    lifespan=lifespan,
 )
 
 
 @app.get("/")
 async def root():
-    """Health check endpoint."""
-    return {"message": "OpChat API is running", "status": "healthy"}
+    """Root endpoint for health checks."""
+    logger.info("Health check endpoint accessed")
+    return {"message": "OpChat Backend is running", "status": "healthy"}
 
 
 @app.get("/health")
-async def health():
-    """Health check endpoint for Docker health checks."""
-    return {"status": "healthy", "service": "opchat-api"}
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+async def health_check():
+    """Detailed health check endpoint."""
+    logger.info("Detailed health check accessed")
+    return {"status": "healthy", "service": "opchat-backend", "version": "0.1.0"}

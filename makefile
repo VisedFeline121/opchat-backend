@@ -1,7 +1,7 @@
 # OpChat Backend Makefile
 # Available commands organized by category
 
-.PHONY: help run stop clean restart logs lint lint-fix lint-all ci-lint test ci-test security ci-security setup-db-roles migrate populate populate-large verify-population test-population bench-population clean-db db-hard-reset db-setup db-reset-and-setup bench
+.PHONY: help run stop clean restart logs lint lint-fix lint-all ci-lint test ci-test security ci-security setup-tests-env run-tests teardown-tests-env setup-db-roles migrate populate populate-large verify-population test-population bench-population clean-db db-hard-reset db-setup db-reset-and-setup bench
 
 # Default target
 help:
@@ -22,8 +22,11 @@ help:
 	@echo "  ci-security     - Run security checks (CI safe)"
 	@echo ""
 	@echo "Testing:"
-	@echo "  test            - Run tests in Docker"
-	@echo "  ci-test         - Run tests directly (CI safe)"
+	@echo "  setup-tests-env   - Setup test database containers"
+	@echo "  run-tests         - Run pytest tests (requires setup-tests-env)"
+	@echo "  teardown-tests-env - Shutdown test database containers"
+	@echo "  test              - Run tests in Docker"
+	@echo "  ci-test           - Run tests directly (CI safe)"
 	@echo ""
 	@echo "Database Operations:"
 	@echo "  setup-db-roles    - Create database roles (migration and app)"
@@ -136,6 +139,44 @@ ci-security:
 # =============================================================================
 # TESTING
 # =============================================================================
+
+# Setup test database containers
+setup-tests-env:
+	@echo "Setting up test environment..."
+	docker-compose -f docker-compose.test.yml up -d --build
+	@echo "Waiting for test database to be ready..."
+	@sleep 5
+	@for i in $$(seq 1 20); do \
+		if docker-compose -f docker-compose.test.yml exec -T postgres-test psql -U opchat_test_user -d opchat_test -c "SELECT 1;" >/dev/null 2>&1; then \
+			echo "Database is ready after $$i attempts"; \
+			break; \
+		fi; \
+		if [ $$i -eq 20 ]; then \
+			echo "ERROR: Database failed to become ready after 20 attempts (40 seconds)"; \
+			docker-compose -f docker-compose.test.yml logs postgres-test; \
+			exit 1; \
+		fi; \
+		echo "Attempt $$i/20 - waiting..."; \
+		sleep 2; \
+	done
+	@echo "Test environment is ready!"
+	@echo "Test database URL: postgresql://opchat_test_user:test_password@localhost:5433/opchat_test"
+
+# Run pytest tests (requires setup-tests-env)
+run-tests:
+	@echo "Running tests..."
+	@if ! docker-compose -f docker-compose.test.yml ps test-runner | grep -q "Up"; then \
+		echo "ERROR: Test environment is not running. Please run 'make setup-tests-env' first."; \
+		exit 1; \
+	fi
+	@echo "Running repository tests in container..."
+	docker-compose -f docker-compose.test.yml exec test-runner python -m pytest tests/repositories/ -v --tb=short
+
+# Shutdown test database containers
+teardown-tests-env:
+	@echo "Shutting down test environment..."
+	docker-compose -f docker-compose.test.yml down
+	@echo "Test environment shut down!"
 
 # Run tests inside Docker container (full environment)
 test:

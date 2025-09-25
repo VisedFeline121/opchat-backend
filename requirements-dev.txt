@@ -1,24 +1,17 @@
+-r requirements.txt
+
 # Development dependencies
--r requirements-prod.txt
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+black>=24.8.0
+ruff>=0.1.8
+isort>=5.13.2
+mypy>=1.7.1
+pre-commit>=3.5.0
 
-# Testing
-pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-cov==4.1.0
-httpx==0.25.2
-
-# Code quality
-pre-commit==4.3.0
-black==24.8.0
-ruff==0.1.8
-isort==5.13.2
-mypy==1.7.1
-types-passlib==1.7.4
-types-requests==2.31.0
-types-redis==4.6.0
-
-# Development tools
-ipython==8.17.2
-
-# Security tools
-pip-audit==2.6.1
+# Type stubs
+types-passlib>=1.7.4
+types-requests>=2.31.0
+types-redis>=4.6.0
+types-PyYAML>=6.0.2

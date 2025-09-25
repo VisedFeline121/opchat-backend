@@ -23,25 +23,10 @@ dependencies = [
     "python-multipart>=0.0.18",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.1.0",
-    "black>=24.8.0",
-    "ruff>=0.1.8",
-    "isort>=5.13.2",
-    "mypy>=1.7.1",
-    "pre-commit>=3.5.0",
-    "types-passlib>=1.7.4",
-    "types-requests>=2.31.0",
-    "types-redis>=4.6.0",
-]
 
 [tool.black]
 line-length = 88
 target-version = ['py312']
-include = '\.pyi?$'
 extend-exclude = '''
 /(
   # directories
@@ -53,13 +38,15 @@ extend-exclude = '''
   | \.venv
   | build
   | dist
-  | migrations
+  | alembic
+  | tests
 )/
 '''
 
 [tool.ruff]
 target-version = "py312"
 line-length = 88
+exclude = ["tests", "alembic", "migrations"]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -76,6 +63,7 @@ ignore = [
 
 [tool.ruff.per-file-ignores]
 "migrations/*" = ["E501", "F401", "E402", "I001"]
+"alembic/*" = ["E501", "F401", "E402", "I001"]
 
 [tool.isort]
 profile = "black"
@@ -86,19 +74,21 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 known_first_party = ["app"]
-skip = ["migrations"]
+skip = ["migrations", "alembic", "tests"]
 
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
+exclude = ["tests/"]
 
 [[tool.mypy.overrides]]
 module = [
     "passlib.*",
     "alembic.*",
     "pika.*",
+    "yaml",
 ]
 ignore_missing_imports = true
 

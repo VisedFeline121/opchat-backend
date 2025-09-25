@@ -1,0 +1,87 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  standard:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+  
+  detailed:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: WARNING
+    formatter: standard
+    stream: ext://sys.stdout
+
+  file_info:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: detailed
+    filename: logs/opchat.log
+    maxBytes: 52428800  # 50MB
+    backupCount: 10
+    encoding: utf8
+
+  file_error:
+    class: logging.handlers.RotatingFileHandler
+    level: ERROR
+    formatter: detailed
+    filename: logs/opchat_error.log
+    maxBytes: 52428800  # 50MB
+    backupCount: 10
+    encoding: utf8
+
+  # Syslog handler for production monitoring
+  syslog:
+    class: logging.handlers.SysLogHandler
+    level: ERROR
+    formatter: standard
+    address: ['localhost', 514]
+
+loggers:
+  # Repository loggers - less verbose in production
+  app.repositories:
+    level: INFO
+    handlers: [file_info, file_error, syslog]
+    propagate: false
+
+  # API loggers
+  app.api:
+    level: INFO
+    handlers: [file_info, file_error, syslog]
+    propagate: false
+
+  # Database loggers - minimal in production
+  sqlalchemy.engine:
+    level: ERROR
+    handlers: [file_error, syslog]
+    propagate: false
+
+  sqlalchemy.pool:
+    level: ERROR
+    handlers: [file_error]
+    propagate: false
+
+  # Third party loggers
+  uvicorn:
+    level: INFO
+    handlers: [file_info]
+    propagate: false
+
+  uvicorn.access:
+    level: INFO
+    handlers: [file_info]
+    propagate: false
+
+  fastapi:
+    level: WARNING
+    handlers: [file_info, file_error]
+    propagate: false
+
+root:
+  level: INFO
+  handlers: [console, file_info, file_error, syslog]

@@ -1,0 +1,94 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  standard:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+  
+  detailed:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d - %(funcName)s - %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: standard
+    stream: ext://sys.stdout
+
+  file_info:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: detailed
+    filename: logs/opchat.log
+    maxBytes: 10485760  # 10MB
+    backupCount: 5
+    encoding: utf8
+
+  file_error:
+    class: logging.handlers.RotatingFileHandler
+    level: ERROR
+    formatter: detailed
+    filename: logs/opchat_error.log
+    maxBytes: 10485760  # 10MB
+    backupCount: 5
+    encoding: utf8
+
+  file_debug:
+    class: logging.handlers.RotatingFileHandler
+    level: DEBUG
+    formatter: detailed
+    filename: logs/opchat_debug.log
+    maxBytes: 10485760  # 10MB
+    backupCount: 3
+    encoding: utf8
+
+loggers:
+  # Repository loggers
+  app.repositories:
+    level: INFO
+    handlers: [console, file_info, file_error]
+    propagate: false
+
+  app.repositories.base_repo:
+    level: INFO
+    handlers: [console, file_info, file_error]
+    propagate: false
+
+  # API loggers
+  app.api:
+    level: INFO
+    handlers: [console, file_info, file_error]
+    propagate: false
+
+  # Database loggers
+  sqlalchemy.engine:
+    level: WARNING
+    handlers: [file_debug]
+    propagate: false
+
+  sqlalchemy.pool:
+    level: WARNING
+    handlers: [file_debug]
+    propagate: false
+
+  # Third party loggers
+  uvicorn:
+    level: INFO
+    handlers: [console, file_info]
+    propagate: false
+
+  uvicorn.access:
+    level: INFO
+    handlers: [file_info]
+    propagate: false
+
+  fastapi:
+    level: INFO
+    handlers: [console, file_info]
+    propagate: false
+
+root:
+  level: INFO
+  handlers: [console, file_info, file_error]

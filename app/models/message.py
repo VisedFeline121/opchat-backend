@@ -23,6 +23,7 @@ class Message(Base):
     sender_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
     content = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=func.now())
+    idempotency_key = Column(String, nullable=True, unique=True, index=True)
 
     # Relationships
     chat = relationship("Chat", back_populates="messages")

@@ -8,18 +8,18 @@ from sqlalchemy.exc import IntegrityError
 from app.repositories.base_repo import BaseRepo
 
 
-class TestRepo(BaseRepo):
-    """Test implementation of BaseRepo for testing."""
+class SampleRepo(BaseRepo):
+    """Sample implementation of BaseRepo for testing."""
 
-    def test_operation(self, param, session=None):
-        """Test method that uses _execute_with_session."""
+    def sample_operation(self, param, session=None):
+        """Sample method that uses _execute_with_session."""
         return self._execute_with_session(
-            lambda s: self._test_operation_impl(s, param),
+            lambda s: self._sample_operation_impl(s, param),
             session=session,
-            operation_name="test_operation",
+            operation_name="sample_operation",
         )
 
-    def _test_operation_impl(self, session, param):
+    def _sample_operation_impl(self, session, param):
         """Test implementation that can succeed or fail."""
         if param == "fail":
             raise IntegrityError("Test error", None, None)
@@ -41,13 +41,13 @@ class TestBaseRepo:
     def test_repo(self, mock_session_factory):
         """Test repository instance."""
         factory, _ = mock_session_factory
-        return TestRepo(factory)
+        return SampleRepo(factory)
 
     def test_auto_commit_mode_success(self, test_repo, mock_session_factory):
         """Test auto-commit mode with successful operation."""
         factory, mock_session = mock_session_factory
 
-        result = test_repo.test_operation("test_param")
+        result = test_repo.sample_operation("test_param")
 
         # Verify session lifecycle
         factory.assert_called_once()
@@ -60,7 +60,7 @@ class TestBaseRepo:
         factory, mock_session = mock_session_factory
 
         with pytest.raises(IntegrityError):
-            test_repo.test_operation("fail")
+            test_repo.sample_operation("fail")
 
         # Verify rollback and cleanup
         factory.assert_called_once()
@@ -73,7 +73,7 @@ class TestBaseRepo:
         factory, _ = mock_session_factory
         external_session = Mock()
 
-        result = test_repo.test_operation("test_param", session=external_session)
+        result = test_repo.sample_operation("test_param", session=external_session)
 
         # Should not create new session or commit
         factory.assert_not_called()
@@ -88,7 +88,7 @@ class TestBaseRepo:
         external_session = Mock()
 
         with pytest.raises(IntegrityError):
-            test_repo.test_operation("fail", session=external_session)
+            test_repo.sample_operation("fail", session=external_session)
 
         # Should not manage external session
         factory.assert_not_called()
@@ -104,12 +104,12 @@ class TestBaseRepo:
         factory, mock_session = mock_session_factory
 
         with pytest.raises(IntegrityError):
-            test_repo.test_operation("fail")
+            test_repo.sample_operation("fail")
 
         # Verify error was logged
         mock_logger.error.assert_called_once()
         call_args = mock_logger.error.call_args
-        assert "test_operation" in call_args[0][0]
+        assert "sample_operation" in call_args[0][0]
         assert "Test error" in call_args[0][0]
 
     def test_original_exception_preserved(self, test_repo, mock_session_factory):
@@ -117,7 +117,7 @@ class TestBaseRepo:
         factory, mock_session = mock_session_factory
 
         with pytest.raises(IntegrityError) as exc_info:
-            test_repo.test_operation("fail")
+            test_repo.sample_operation("fail")
 
         # Verify it contains the original error message
         assert "Test error" in str(exc_info.value)

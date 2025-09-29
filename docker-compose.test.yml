@@ -19,8 +19,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.test
+    env_file:
+      - .env
     environment:
       TEST_DATABASE_URL: "postgresql://opchat_test_user:test_password@postgres-test:5432/opchat_test"
+      APP_DATABASE_URL: "postgresql://opchat_test_user:test_password@postgres-test:5432/opchat_test"
     volumes:
       - .:/app
     working_dir: /app

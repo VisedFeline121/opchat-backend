@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.auth import router as auth_router
-from app.core.logging import get_logger, log_startup_info, setup_logging
+from app.core.logging.logging import get_logger, log_startup_info, setup_logging
 
 # Initialize logging first
 setup_logging()

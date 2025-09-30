@@ -11,7 +11,7 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
+from app.core.config.config import settings
 from app.db.db import get_db
 from app.dependencies import get_user_repo
 from app.models.user import User, UserStatus

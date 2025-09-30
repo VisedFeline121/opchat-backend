@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from app.core.auth_utils import get_password_hash
+from app.core.auth.auth_utils import get_password_hash
 from app.main import app
 from app.models import Base
 from app.models.user import User, UserStatus

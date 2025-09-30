@@ -6,7 +6,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.core.logging import get_logger
+from app.core.logging.logging import get_logger
 from app.models.message import Message
 from app.repositories.base_repo import BaseRepo
 

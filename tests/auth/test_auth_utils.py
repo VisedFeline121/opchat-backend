@@ -8,7 +8,7 @@ from uuid import uuid4
 from fastapi import HTTPException, status
 from jose import jwt
 
-from app.core.auth_utils import (
+from app.core.auth.auth_utils import (
     verify_password,
     get_password_hash,
     create_access_token,
@@ -111,9 +111,9 @@ class TestGetCurrentUser:
         """Test that valid token returns user."""
         token = create_access_token(mock_user.id)
 
-        with patch("app.core.auth_utils.UserRepo", return_value=mock_user_repo):
+        with patch("app.core.auth.auth_utils.UserRepo", return_value=mock_user_repo):
             # Mock the db session dependency
-            with patch("app.core.auth_utils.get_db") as mock_get_db:
+            with patch("app.core.auth.auth_utils.get_db") as mock_get_db:
                 mock_db = mock_get_db.return_value
                 result = await get_current_user(token, mock_user_repo, mock_db)
                 assert result == mock_user
@@ -126,8 +126,8 @@ class TestGetCurrentUser:
         """Test that invalid token raises 401."""
         invalid_token = "invalid.token.here"
 
-        with patch("app.core.auth_utils.UserRepo", return_value=mock_user_repo):
-            with patch("app.core.auth_utils.get_db") as mock_get_db:
+        with patch("app.core.auth.auth_utils.UserRepo", return_value=mock_user_repo):
+            with patch("app.core.auth.auth_utils.get_db") as mock_get_db:
                 mock_db = mock_get_db.return_value
                 with pytest.raises(HTTPException) as exc_info:
                     await get_current_user(invalid_token, mock_user_repo, mock_db)
@@ -143,8 +143,8 @@ class TestGetCurrentUser:
         payload = {"user_id": str(mock_user.id), "exp": expired_time.timestamp()}
         expired_token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
-        with patch("app.core.auth_utils.UserRepo", return_value=mock_user_repo):
-            with patch("app.core.auth_utils.get_db") as mock_get_db:
+        with patch("app.core.auth.auth_utils.UserRepo", return_value=mock_user_repo):
+            with patch("app.core.auth.auth_utils.get_db") as mock_get_db:
                 mock_db = mock_get_db.return_value
                 with pytest.raises(HTTPException) as exc_info:
                     await get_current_user(expired_token, mock_user_repo, mock_db)
@@ -158,8 +158,8 @@ class TestGetCurrentUser:
         token = create_access_token(user_id)
         mock_user_repo.get_user_by_id.return_value = None
 
-        with patch("app.core.auth_utils.UserRepo", return_value=mock_user_repo):
-            with patch("app.core.auth_utils.get_db") as mock_get_db:
+        with patch("app.core.auth.auth_utils.UserRepo", return_value=mock_user_repo):
+            with patch("app.core.auth.auth_utils.get_db") as mock_get_db:
                 mock_db = mock_get_db.return_value
                 with pytest.raises(HTTPException) as exc_info:
                     await get_current_user(token, mock_user_repo, mock_db)

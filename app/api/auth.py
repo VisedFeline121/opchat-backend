@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
@@ -17,6 +17,8 @@ from app.core.auth_utils import (
     get_password_hash,
     verify_password,
 )
+from app.core.config import settings
+from app.core.rate_limiter import rate_limiter
 from app.db.db import get_db
 from app.dependencies import get_user_repo
 from app.models.user import User, UserStatus
@@ -36,10 +38,23 @@ router = APIRouter()
 @router.post("/signup", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def signup(
     user_data: UserCreate,
+    request: Request,
     db: Annotated[Session, Depends(get_db)],
     user_repo: Annotated[UserRepo, Depends(get_user_repo)],
 ):
     """Create a new user account."""
+
+    # Check rate limit for signup
+    if not await rate_limiter.check_ip_rate_limit(
+        request,
+        "signup",
+        settings.SIGNUP_RATE_LIMIT_PER_MINUTE,
+        settings.RATE_LIMIT_WINDOW_SECONDS,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many signup attempts. Please try again later.",
+        )
 
     # Check if username already exists
     existing_user = user_repo.get_by_username(user_data.username, session=db)
@@ -67,10 +82,23 @@ async def signup(
 @router.post("/login", response_model=Token)
 async def login(
     login_data: LoginRequest,
+    request: Request,
     db: Annotated[Session, Depends(get_db)],
     user_repo: Annotated[UserRepo, Depends(get_user_repo)],
 ):
     """Authenticate user and return tokens."""
+
+    # Check rate limit for login
+    if not await rate_limiter.check_ip_rate_limit(
+        request,
+        "login",
+        settings.AUTH_RATE_LIMIT_PER_MINUTE,
+        settings.RATE_LIMIT_WINDOW_SECONDS,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many login attempts. Please try again later.",
+        )
 
     # Get user by username
     user = user_repo.get_by_username(login_data.username, session=db)
@@ -104,10 +132,23 @@ async def logout(current_user: Annotated[User, Depends(get_current_active_user)]
 @router.post("/refresh", response_model=Token)
 async def refresh_token(
     refresh_data: TokenRefresh,
+    request: Request,
     db: Annotated[Session, Depends(get_db)],
     user_repo: Annotated[UserRepo, Depends(get_user_repo)],
 ):
     """Refresh access token using refresh token."""
+
+    # Check rate limit for refresh
+    if not await rate_limiter.check_ip_rate_limit(
+        request,
+        "refresh",
+        settings.REFRESH_RATE_LIMIT_PER_MINUTE,
+        settings.RATE_LIMIT_WINDOW_SECONDS,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many refresh attempts. Please try again later.",
+        )
 
     try:
         # Validate refresh token

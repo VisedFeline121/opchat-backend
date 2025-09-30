@@ -51,8 +51,20 @@ class Settings(BaseSettings):
     REDIS_TTL_SECONDS: int = int(os.getenv("REDIS_TTL_SECONDS", "0"))
 
     # Rate Limiting
-    RATE_LIMIT_PER_MINUTE: int = int(os.getenv("RATE_LIMIT_PER_MINUTE", "0"))
-    AUTH_RATE_LIMIT_PER_MINUTE: int = int(os.getenv("AUTH_RATE_LIMIT_PER_MINUTE", "0"))
+    RATE_LIMIT_PER_MINUTE: int = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
+    AUTH_RATE_LIMIT_PER_MINUTE: int = int(os.getenv("AUTH_RATE_LIMIT_PER_MINUTE", "10"))
+    SIGNUP_RATE_LIMIT_PER_MINUTE: int = int(
+        os.getenv("SIGNUP_RATE_LIMIT_PER_MINUTE", "5")
+    )
+    REFRESH_RATE_LIMIT_PER_MINUTE: int = int(
+        os.getenv("REFRESH_RATE_LIMIT_PER_MINUTE", "20")
+    )
+    RATE_LIMIT_WINDOW_SECONDS: int = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
+
+    # Redis Configuration
+    REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
+    REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
+    REDIS_DB: int = int(os.getenv("REDIS_DB", "0"))
 
     # CORS
     BACKEND_CORS_ORIGINS: list[str] = []

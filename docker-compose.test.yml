@@ -15,6 +15,18 @@ services:
       timeout: 5s
       retries: 5
 
+  redis-test:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   test-runner:
     build:
       context: .
@@ -24,12 +36,17 @@ services:
     environment:
       TEST_DATABASE_URL: "postgresql://opchat_test_user:test_password@postgres-test:5432/opchat_test"
       APP_DATABASE_URL: "postgresql://opchat_test_user:test_password@postgres-test:5432/opchat_test"
+      REDIS_HOST: "redis-test"
+      REDIS_PORT: "6379"
+      REDIS_URL: "redis://redis-test:6379/0"
     volumes:
       - .:/app
     working_dir: /app
     command: tail -f /dev/null  # Keep container running
     depends_on:
       - postgres-test
+      - redis-test
 
 volumes:
   postgres_test_data:
+  redis_test_data:

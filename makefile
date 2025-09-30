@@ -169,8 +169,8 @@ run-tests:
 		echo "ERROR: Test environment is not running. Please run 'make setup-tests-env' first."; \
 		exit 1; \
 	fi
-	@echo "Running repository tests in container..."
-	docker-compose -f docker-compose.test.yml exec test-runner python -m pytest tests/repositories/ -v --tb=short
+	@echo "Running all tests in container..."
+	docker-compose -f docker-compose.test.yml exec test-runner python -m pytest tests/ -v --tb=short
 
 # Shutdown test database containers
 teardown-tests-env:

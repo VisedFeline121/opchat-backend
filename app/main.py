@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.auth import router as auth_router
 from app.core.logging import get_logger, log_startup_info, setup_logging
 
 # Initialize logging first
@@ -30,6 +31,9 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+# Include routers
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
 
 
 @app.get("/")

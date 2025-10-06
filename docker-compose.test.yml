@@ -27,6 +27,22 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq-test:
+    image: rabbitmq:3.12-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: opchat_test
+      RABBITMQ_DEFAULT_PASS: test_password
+    ports:
+      - "5673:5672"  # Different port to avoid conflicts
+      - "15673:15672"  # Management UI
+    volumes:
+      - rabbitmq_test_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   test-runner:
     build:
       context: .
@@ -39,6 +55,11 @@ services:
       REDIS_HOST: "redis-test"
       REDIS_PORT: "6379"
       REDIS_URL: "redis://redis-test:6379/0"
+      RABBITMQ_HOST: "rabbitmq-test"
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: "opchat_test"
+      RABBITMQ_PASSWORD: "test_password"
+      RABBITMQ_VHOST: "/"
     volumes:
       - .:/app
     working_dir: /app
@@ -46,7 +67,9 @@ services:
     depends_on:
       - postgres-test
       - redis-test
+      - rabbitmq-test
 
 volumes:
   postgres_test_data:
   redis_test_data:
+  rabbitmq_test_data:

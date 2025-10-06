@@ -54,6 +54,19 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 5672:5672
+          - 15672:15672
+        env:
+          RABBITMQ_DEFAULT_USER: opchat
+          RABBITMQ_DEFAULT_PASS: opchat
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -78,6 +91,11 @@ jobs:
           REDIS_HOST: localhost
           REDIS_PORT: 6379
           REDIS_URL: redis://localhost:6379/0
+          RABBITMQ_HOST: localhost
+          RABBITMQ_PORT: 5672
+          RABBITMQ_USER: opchat
+          RABBITMQ_PASSWORD: opchat
+          RABBITMQ_VHOST: /
           JWT_SECRET_KEY: test-secret-key-for-ci
           ALGORITHM: HS256
         run: make ci-test

@@ -1,6 +1,7 @@
 """Health check endpoints for system monitoring."""
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.core.messaging.broker import get_message_broker
@@ -56,7 +57,7 @@ async def database_health(db: Session = Depends(get_db)):
     """Health check for database connection."""
     try:
         # Simple query to test database connection
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         return {"status": "healthy", "database_connected": True}
     except Exception as e:
         return {"status": "unhealthy", "database_connected": False, "error": str(e)}
@@ -67,7 +68,7 @@ async def readiness_check(db: Session = Depends(get_db)):
     """Readiness check for Kubernetes/container orchestration."""
     try:
         # Check database
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
 
         # Check messaging
         broker = get_message_broker()

@@ -176,6 +176,29 @@ class MessageBroker:
             logger.error(f"Failed to setup message processor queue {queue_name}: {e}")
             raise
 
+    def setup_delay_queue(self) -> str:
+        """Set up delay queue for exponential backoff retries."""
+        delay_queue_name = "message_processor_delay"
+
+        try:
+            if self.channel:
+                # Queue arguments for delay mechanism using TTL + DLX
+                queue_args = {
+                    "x-message-ttl": 300000,  # 5 minutes max TTL
+                    "x-dead-letter-exchange": "conv.message.pending",  # Route back to main queue
+                    "x-dead-letter-routing-key": "conv.*.message.pending",
+                }
+
+                self.channel.queue_declare(
+                    queue=delay_queue_name, durable=True, arguments=queue_args
+                )
+
+            logger.info(f"Set up delay queue: {delay_queue_name}")
+            return delay_queue_name
+        except AMQPChannelError as e:
+            logger.error(f"Failed to setup delay queue {delay_queue_name}: {e}")
+            raise
+
     def publish_message_pending(self, chat_id: str, message_data: Dict[str, Any]):
         """Publish message.pending event (API -> Background Processor) with retry headers and message ID."""
         routing_key = f"conv.{chat_id}.message.pending"
@@ -262,6 +285,53 @@ class MessageBroker:
             log_counter_increment(
                 "publish_errors_total",
                 labels={"event_type": "message_created", "error_type": "channel_error"},
+            )
+            raise
+
+    def publish_to_delay_queue(self, message_data: Dict[str, Any], delay_seconds: int):
+        """Publish message to delay queue with specific TTL for exponential backoff."""
+        delay_queue_name = "message_processor_delay"
+        message_id = message_data.get("id")
+
+        try:
+            if self.channel:
+                # Calculate TTL in milliseconds
+                ttl_ms = delay_seconds * 1000
+
+                # Publish to delay queue with TTL
+                self.channel.basic_publish(
+                    exchange="",  # Direct to queue
+                    routing_key=delay_queue_name,
+                    body=json.dumps(message_data),
+                    properties=pika.BasicProperties(
+                        message_id=message_id,
+                        delivery_mode=2,  # Make message persistent
+                        content_type="application/json",
+                        expiration=str(ttl_ms),  # TTL in milliseconds
+                        headers={
+                            "x-retry-count": message_data.get("retry_count", 0),
+                            "x-original-timestamp": message_data.get("timestamp"),
+                        },
+                    ),
+                )
+
+            # Log metrics
+            log_counter_increment(
+                "messages_delayed_total",
+                labels={
+                    "delay_seconds": str(delay_seconds),
+                    "retry_count": str(message_data.get("retry_count", 0)),
+                },
+            )
+
+            logger.info(
+                f"Published message to delay queue with {delay_seconds}s delay, retry count: {message_data.get('retry_count', 0)}"
+            )
+        except AMQPChannelError as e:
+            logger.error(f"Failed to publish to delay queue: {e}")
+            log_counter_increment(
+                "publish_errors_total",
+                labels={"event_type": "delay_queue", "error_type": "channel_error"},
             )
             raise
 

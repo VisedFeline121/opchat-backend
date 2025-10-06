@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.main import app
 from app.models.user import User, UserStatus
 from app.repositories.user_repo import UserRepo
-from app.core.auth_utils import (
+from app.core.auth.auth_utils import (
     get_password_hash,
     create_access_token,
     create_refresh_token,
@@ -172,7 +172,7 @@ class TestTokenRefresh:
         # Create an expired refresh token
         from datetime import datetime, timedelta
         from jose import jwt
-        from app.core.auth_utils import JWT_SECRET_KEY, JWT_ALGORITHM
+        from app.core.auth.auth_utils import JWT_SECRET_KEY, JWT_ALGORITHM
 
         expired_time = datetime.now(timezone.utc) - timedelta(hours=1)
         payload = {"user_id": str(test_user.id), "exp": expired_time.timestamp()}
@@ -328,7 +328,7 @@ class TestUserRepositoryIntegration:
         )
 
         # Verify password
-        from app.core.auth_utils import verify_password
+        from app.core.auth.auth_utils import verify_password
 
         assert verify_password(password, user.password_hash)
 
@@ -338,7 +338,7 @@ class TestUserRepositoryIntegration:
 
         # Verify token contains correct user_id
         from jose import jwt
-        from app.core.auth_utils import JWT_SECRET_KEY, JWT_ALGORITHM
+        from app.core.auth.auth_utils import JWT_SECRET_KEY, JWT_ALGORITHM
 
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
         assert payload["user_id"] == str(user.id)

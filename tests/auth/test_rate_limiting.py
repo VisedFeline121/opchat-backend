@@ -7,8 +7,8 @@ from fastapi import Request
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.core.rate_limiter import rate_limiter
-from app.core.config import settings
+from app.core.rate_limiting.rate_limiter import RateLimiter, rate_limiter
+from app.core.config.config import settings
 
 
 class TestRateLimiter:
@@ -20,7 +20,7 @@ class TestRateLimiter:
         assert rate_limiter.redis_client is not None
 
     @pytest.mark.asyncio
-    @patch("app.core.rate_limiter.rate_limiter.redis_client")
+    @patch("app.core.rate_limiting.rate_limiter.rate_limiter.redis_client")
     async def test_check_rate_limit_allowed(self, mock_redis):
         """Test rate limit check when request is allowed."""
         # Mock Redis pipeline
@@ -35,7 +35,7 @@ class TestRateLimiter:
         assert result is True
 
     @pytest.mark.asyncio
-    @patch("app.core.rate_limiter.rate_limiter.redis_client")
+    @patch("app.core.rate_limiting.rate_limiter.rate_limiter.redis_client")
     async def test_check_rate_limit_exceeded(self, mock_redis):
         """Test rate limit check when request is exceeded."""
         # Mock Redis pipeline
@@ -50,7 +50,7 @@ class TestRateLimiter:
         assert result is False
 
     @pytest.mark.asyncio
-    @patch("app.core.rate_limiter.rate_limiter.redis_client")
+    @patch("app.core.rate_limiting.rate_limiter.rate_limiter.redis_client")
     async def test_check_rate_limit_redis_error_fail_open(self, mock_redis):
         """Test that rate limiter fails open when Redis is down (allows requests)."""
         # Mock Redis error during pipeline execution
@@ -109,7 +109,6 @@ class TestRateLimiterRedisIntegration:
     @pytest.fixture
     def test_rate_limiter(self, redis_client):
         """Create rate limiter with test Redis client."""
-        from app.core.rate_limiter import RateLimiter
 
         limiter = RateLimiter()
         limiter.redis_client = redis_client
@@ -208,7 +207,7 @@ class TestRateLimitingIntegration:
         """Create test client."""
         return TestClient(app)
 
-    @patch("app.core.rate_limiter.rate_limiter.check_ip_rate_limit")
+    @patch("app.core.rate_limiting.rate_limiter.rate_limiter.check_ip_rate_limit")
     def test_signup_rate_limiting(self, mock_rate_limit, client):
         """Test that signup endpoint respects rate limiting."""
         # Mock rate limit check to return False (rate limited)
@@ -222,7 +221,7 @@ class TestRateLimitingIntegration:
         assert response.status_code == 429
         assert "Too many signup attempts" in response.json()["detail"]
 
-    @patch("app.core.rate_limiter.rate_limiter.check_ip_rate_limit")
+    @patch("app.core.rate_limiting.rate_limiter.rate_limiter.check_ip_rate_limit")
     def test_login_rate_limiting(self, mock_rate_limit, client):
         """Test that login endpoint respects rate limiting."""
         # Mock rate limit check to return False (rate limited)
@@ -236,7 +235,7 @@ class TestRateLimitingIntegration:
         assert response.status_code == 429
         assert "Too many login attempts" in response.json()["detail"]
 
-    @patch("app.core.rate_limiter.rate_limiter.check_ip_rate_limit")
+    @patch("app.core.rate_limiting.rate_limiter.rate_limiter.check_ip_rate_limit")
     def test_refresh_rate_limiting(self, mock_rate_limit, client):
         """Test that refresh endpoint respects rate limiting."""
         # Mock rate limit check to return False (rate limited)
@@ -275,7 +274,10 @@ class TestRealRedisAuthIntegration:
     def client_with_real_redis(self, redis_client):
         """Create test client with real Redis rate limiting."""
         # Patch the rate limiter to use our test Redis
-        with patch("app.core.rate_limiter.rate_limiter.redis_client", redis_client):
+        with patch(
+            "app.core.rate_limiting.rate_limiter.rate_limiter.redis_client",
+            redis_client,
+        ):
             yield TestClient(app)
 
     def test_real_redis_signup_rate_limiting(self, client_with_real_redis):

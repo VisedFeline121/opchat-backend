@@ -3,7 +3,7 @@
 import redis
 from fastapi import Request
 
-from app.core.config import settings
+from app.core.config.config import settings
 
 
 class RateLimiter:

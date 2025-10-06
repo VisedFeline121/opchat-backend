@@ -44,7 +44,7 @@ All log files are created in the `logs/` directory:
 ### Usage in Code
 
 ```python
-from app.core.logging import get_logger
+from app.core.logging.logging import get_logger
 
 logger = get_logger(__name__)
 logger.info("This is an info message")

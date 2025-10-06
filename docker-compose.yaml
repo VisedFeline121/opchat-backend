@@ -42,6 +42,25 @@ services:
                 condition: service_healthy
         restart: unless-stopped
 
+    message-processor:
+        build: .
+        command: ["python", "app/message_processor.py"]
+        environment:
+            - DATABASE_URL=postgresql://opchat_migration:opchat_migration_pass@postgres:5432/opchat
+            - APP_DATABASE_URL=postgresql://opchat_app:opchat_app_pass@postgres:5432/opchat
+            - REDIS_URL=redis://redis:6379
+            - RABBITMQ_URL=amqp://opchat:opchat@rabbitmq:5672
+        volumes:
+            - .:/app
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        restart: unless-stopped
+
     system:
         build: .
         volumes:

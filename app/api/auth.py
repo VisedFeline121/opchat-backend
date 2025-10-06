@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
-from app.core.auth_utils import (
+from app.core.auth.auth_utils import (
     JWT_ALGORITHM,
     JWT_SECRET_KEY,
     create_access_token,
@@ -17,8 +17,8 @@ from app.core.auth_utils import (
     get_password_hash,
     verify_password,
 )
-from app.core.config import settings
-from app.core.rate_limiter import rate_limiter
+from app.core.config.config import settings
+from app.core.rate_limiting.rate_limiter import rate_limiter
 from app.db.db import get_db
 from app.dependencies import get_user_repo
 from app.models.user import User, UserStatus

@@ -1,7 +1,7 @@
 # OpChat Backend Makefile
 # Available commands organized by category
 
-.PHONY: help run stop clean restart logs lint lint-fix lint-all ci-lint test ci-test security ci-security setup-tests-env run-tests teardown-tests-env setup-db-roles migrate populate populate-large verify-population test-population bench-population clean-db db-hard-reset db-setup db-reset-and-setup bench
+.PHONY: help run stop clean restart logs lint lint-fix lint-all ci-lint test ci-test security ci-security setup-tests-env run-tests run-tests-dir teardown-tests-env setup-db-roles migrate populate populate-large verify-population test-population bench-population clean-db db-hard-reset db-setup db-reset-and-setup bench
 
 # Default target
 help:
@@ -24,6 +24,7 @@ help:
 	@echo "Testing:"
 	@echo "  setup-tests-env   - Setup test database containers"
 	@echo "  run-tests         - Run pytest tests (requires setup-tests-env)"
+	@echo "  run-tests-dir DIR - Run tests for specific directory (e.g., make run-tests-dir tests/api)"
 	@echo "  teardown-tests-env - Shutdown test database containers"
 	@echo "  test              - Run tests in Docker"
 	@echo "  ci-test           - Run tests directly (CI safe)"
@@ -171,6 +172,32 @@ run-tests:
 	fi
 	@echo "Running all tests in container..."
 	docker-compose -f docker-compose.test.yml exec test-runner python -m pytest tests/ -v --tb=short
+
+# Run tests for specific directory (requires setup-tests-env)
+# Usage: make run-tests-dir tests/api
+run-tests-dir:
+	@if [ -z "$(DIR)" ]; then \
+		echo "ERROR: Please specify a directory. Usage: make run-tests-dir DIR=tests/api"; \
+		echo "Available test directories:"; \
+		echo "  tests/api          - API endpoint tests"; \
+		echo "  tests/services     - Service layer tests"; \
+		echo "  tests/repositories - Repository layer tests"; \
+		echo "  tests/integration  - Integration tests"; \
+		echo "  tests/core         - Core functionality tests"; \
+		echo "  tests/auth         - Authentication tests"; \
+		exit 1; \
+	fi
+	@echo "Running tests for directory: $(DIR)"
+	@if ! docker-compose -f docker-compose.test.yml ps test-runner | grep -q "Up"; then \
+		echo "ERROR: Test environment is not running. Please run 'make setup-tests-env' first."; \
+		exit 1; \
+	fi
+	@if [ ! -d "$(DIR)" ]; then \
+		echo "ERROR: Directory '$(DIR)' does not exist."; \
+		exit 1; \
+	fi
+	@echo "Running tests in $(DIR)..."
+	docker-compose -f docker-compose.test.yml exec test-runner python -m pytest $(DIR)/ -v --tb=short
 
 # Shutdown test database containers
 teardown-tests-env:

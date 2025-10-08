@@ -1,6 +1,5 @@
 """Membership model."""
 
-import enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -16,15 +15,12 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
+from app.core.enums import MemberRole
+
 from . import Base
 
 if TYPE_CHECKING:
     pass
-
-
-class MemberRole(enum.Enum):
-    MEMBER = "member"
-    ADMIN = "admin"
 
 
 class Membership(Base):

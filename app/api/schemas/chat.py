@@ -174,10 +174,10 @@ class SuccessResponse(BaseModel):
 class ChatCreatedResponse(SuccessResponse):
     """Response for successful chat creation."""
 
-    data: ChatResponse = Field(..., description="Created chat information")
+    data: ChatResponse = Field(..., description="Created chat information")  # type: ignore[assignment]
 
 
 class MemberAddedResponse(SuccessResponse):
     """Response for successful member addition."""
 
-    data: MembershipResponse = Field(..., description="Added member information")
+    data: MembershipResponse = Field(..., description="Added member information")  # type: ignore[assignment]

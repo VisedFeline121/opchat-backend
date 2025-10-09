@@ -107,6 +107,22 @@ def client(test_session):
     app.dependency_overrides.clear()
 
 
+@pytest.fixture
+def auth_headers_for_user():
+    """
+    Fixture that returns a function to generate auth headers for a user.
+
+    Usage:
+        def test_something(auth_headers_for_user, sample_users):
+            alice = sample_users[0]
+            headers = auth_headers_for_user(alice)
+            response = client.get("/api/v1/chats/", headers=headers)
+    """
+    from tests.helpers.auth_helper import get_auth_headers
+
+    return get_auth_headers
+
+
 @pytest.fixture(autouse=True)
 def clean_db(test_session):
     """Automatically clean database state before each test."""

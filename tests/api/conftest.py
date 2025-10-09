@@ -11,3 +11,5 @@ from tests.repositories.conftest import (
     message_repo,
     uuid_generator,
 )
+
+# Placeholder user removed - authentication now uses JWT tokens

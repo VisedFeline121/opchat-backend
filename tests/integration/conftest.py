@@ -15,16 +15,4 @@ def user_repo(test_session_factory):
     return UserRepo(test_session_factory)
 
 
-@pytest.fixture
-def placeholder_user(test_session):
-    """Create the placeholder user that the API expects (until auth is implemented)."""
-    # Create user with specific UUID
-    placeholder_user = User(
-        id=UUID("00000000-0000-0000-0000-000000000000"),
-        username="placeholder",
-        password_hash=get_password_hash("hash123"),
-        status=UserStatus.ACTIVE,
-    )
-    test_session.add(placeholder_user)
-    test_session.commit()
-    return placeholder_user
+# Placeholder user fixture removed - authentication now uses JWT tokens

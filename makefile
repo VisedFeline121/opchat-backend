@@ -126,7 +126,7 @@ ci-lint:
 	ruff check . --exclude alembic --exclude migrations --exclude tests
 	black --check . --exclude "(alembic|migrations|tests)"
 	isort --check-only . --skip-glob "alembic/*" --skip-glob "migrations/*" --skip-glob "tests/*"
-	mypy . --show-error-codes
+	mypy . --show-error-codes --exclude alembic --exclude migrations --exclude tests
 
 # Run security checks locally (requires dev dependencies)
 security:

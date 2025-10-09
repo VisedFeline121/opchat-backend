@@ -1,6 +1,6 @@
 """Chat Management API endpoints."""
 
-from typing import Annotated
+from typing import Annotated, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -19,10 +19,12 @@ from app.api.schemas.chat import (
     SuccessResponse,
     UserResponse,
 )
+from app.core.auth.auth_utils import get_current_active_user
 from app.db.db import get_db
 from app.dependencies import get_chat_service
 from app.models.chat import Chat, DirectMessage, GroupChat
 from app.models.membership import Membership
+from app.models.user import User
 from app.services.chat_service import ChatService
 
 router = APIRouter(prefix="/chats", tags=["chats"])
@@ -65,15 +67,11 @@ def _chat_to_response(chat: Chat) -> ChatResponse:
 async def list_user_chats(
     db: Annotated[Session, Depends(get_db)],
     chat_service: Annotated[ChatService, Depends(get_chat_service)],
-    # TODO: Add authentication dependency
-    # current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     """List all chats for the current user."""
-    # TODO: Replace with actual user ID from authentication
-    current_user_id = UUID("00000000-0000-0000-0000-000000000000")  # Placeholder
-
     try:
-        chats = chat_service.get_user_chats(current_user_id, session=db)
+        chats = chat_service.get_user_chats(cast(UUID, current_user.id), session=db)
         chat_responses = [_chat_to_response(chat) for chat in chats]
 
         return ChatListResponse(chats=chat_responses, total=len(chat_responses))
@@ -91,13 +89,9 @@ async def create_chat(
     request: CreateChatRequest,
     db: Annotated[Session, Depends(get_db)],
     chat_service: Annotated[ChatService, Depends(get_chat_service)],
-    # TODO: Add authentication dependency
-    # current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Create a new chat (DM or group)."""
-    # TODO: Replace with actual user ID from authentication
-    current_user_id = UUID("00000000-0000-0000-0000-000000000000")  # Placeholder
-
     try:
         if request.type == ChatType.DM:
             # Create direct message
@@ -109,18 +103,23 @@ async def create_chat(
 
             # Find the other participant (not the current user)
             other_user_id = next(
-                uid for uid in request.participant_ids if uid != current_user_id
+                uid for uid in request.participant_ids if uid != current_user.id
             )
 
             chat = chat_service.create_direct_message(
-                current_user_id, other_user_id, session=db
+                cast(UUID, current_user.id),
+                other_user_id,
+                session=db,  # type: ignore[arg-type]
             )
         else:
             # Create group chat
             # Topic is guaranteed to be non-None for group chats due to validation
             assert request.topic is not None
             chat = chat_service.create_group_chat(
-                current_user_id, request.topic, request.participant_ids, session=db
+                cast(UUID, current_user.id),
+                request.topic,
+                request.participant_ids,
+                session=db,  # type: ignore[arg-type]
             )
 
         chat_response = _chat_to_response(chat)
@@ -145,13 +144,9 @@ async def get_chat_details(
     chat_id: str,
     db: Annotated[Session, Depends(get_db)],
     chat_service: Annotated[ChatService, Depends(get_chat_service)],
-    # TODO: Add authentication dependency
-    # current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Get details of a specific chat."""
-    # TODO: Replace with actual user ID from authentication
-    current_user_id = UUID("00000000-0000-0000-0000-000000000000")  # Placeholder
-
     try:
         chat_uuid = UUID(chat_id)
         chat = chat_service.get_chat_by_id(chat_uuid, session=db)
@@ -164,7 +159,9 @@ async def get_chat_details(
 
         # Check if user is a member
         if not chat_service.is_user_member_of_chat(
-            chat_uuid, current_user_id, session=db
+            chat_uuid,
+            cast(UUID, current_user.id),
+            session=db,  # type: ignore[arg-type]
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -191,19 +188,17 @@ async def list_chat_members(
     chat_id: str,
     db: Annotated[Session, Depends(get_db)],
     chat_service: Annotated[ChatService, Depends(get_chat_service)],
-    # TODO: Add authentication dependency
-    # current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     """List members of a specific chat."""
-    # TODO: Replace with actual user ID from authentication
-    current_user_id = UUID("00000000-0000-0000-0000-000000000000")  # Placeholder
-
     try:
         chat_uuid = UUID(chat_id)
 
         # Check if user is a member
         if not chat_service.is_user_member_of_chat(
-            chat_uuid, current_user_id, session=db
+            chat_uuid,
+            cast(UUID, current_user.id),
+            session=db,  # type: ignore[arg-type]
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -240,17 +235,17 @@ async def add_member(
     request: AddMemberRequest,
     db: Annotated[Session, Depends(get_db)],
     chat_service: Annotated[ChatService, Depends(get_chat_service)],
-    # TODO: Add authentication dependency
-    # current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Add a member to a group chat."""
-    # TODO: Replace with actual user ID from authentication
-    current_user_id = UUID("00000000-0000-0000-0000-000000000000")  # Placeholder
-
     try:
         chat_uuid = UUID(chat_id)
         membership = chat_service.add_member_to_chat(
-            chat_uuid, request.user_id, current_user_id, request.role, session=db
+            chat_uuid,
+            request.user_id,
+            cast(UUID, current_user.id),
+            request.role,
+            session=db,  # type: ignore[arg-type]
         )
 
         membership_response = _membership_to_response(membership)
@@ -259,10 +254,17 @@ async def add_member(
             data=membership_response,
         )
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        ) from e
+        # Check if it's a "not found" error
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e),
+            ) from e
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            ) from e
     except HTTPException:
         raise
     except Exception as e:
@@ -278,27 +280,33 @@ async def remove_member(
     user_id: str,
     db: Annotated[Session, Depends(get_db)],
     chat_service: Annotated[ChatService, Depends(get_chat_service)],
-    # TODO: Add authentication dependency
-    # current_user: User = Depends(get_current_user)
+    current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     """Remove a member from a group chat."""
-    # TODO: Replace with actual user ID from authentication
-    current_user_id = UUID("00000000-0000-0000-0000-000000000000")  # Placeholder
-
     try:
         chat_uuid = UUID(chat_id)
         user_uuid = UUID(user_id)
 
         chat_service.remove_member_from_chat(
-            chat_uuid, user_uuid, current_user_id, session=db
+            chat_uuid,
+            user_uuid,
+            cast(UUID, current_user.id),
+            session=db,  # type: ignore[arg-type]
         )
 
         return SuccessResponse(message="Member removed successfully", data=None)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        ) from e
+        # Check if it's a "not found" error
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e),
+            ) from e
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            ) from e
     except HTTPException:
         raise
     except Exception as e:

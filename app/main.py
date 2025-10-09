@@ -5,7 +5,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.auth import router as auth_router
+from app.api.chats import router as chats_router
 from app.api.health import router as health_router
+from app.api.messages import router as messages_router
 from app.core.logging.logging import get_logger, log_startup_info, setup_logging
 
 # Initialize logging first
@@ -35,6 +37,8 @@ app = FastAPI(
 
 # Include routers
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
+app.include_router(chats_router, prefix="/api/v1", tags=["chats"])
+app.include_router(messages_router, prefix="/api/v1", tags=["messages"])
 app.include_router(health_router, tags=["health"])
 
 

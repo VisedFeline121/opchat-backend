@@ -10,6 +10,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from app.core.auth.auth_utils import get_password_hash
+from app.db.db import get_db
 from app.main import app
 from app.models import Base
 from app.models.user import User, UserStatus
@@ -26,6 +27,7 @@ TEST_DATABASE_URL = os.getenv(
 
 # Set test environment variables
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-for-testing-only"
+os.environ["APP_DATABASE_URL"] = TEST_DATABASE_URL
 os.environ["POSTGRES_HOST"] = "localhost"
 os.environ["POSTGRES_PORT"] = "5433"
 os.environ["POSTGRES_DB"] = "opchat_test"
@@ -90,22 +92,53 @@ def db_session(test_session_factory):
 
 
 @pytest.fixture
-def client():
-    """Create test client."""
-    return TestClient(app)
+def client(test_session):
+    """Create test client with test database session."""
+
+    def override_get_db():
+        try:
+            yield test_session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(app)
+    yield client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def auth_headers_for_user():
+    """
+    Fixture that returns a function to generate auth headers for a user.
+
+    Usage:
+        def test_something(auth_headers_for_user, sample_users):
+            alice = sample_users[0]
+            headers = auth_headers_for_user(alice)
+            response = client.get("/api/v1/chats/", headers=headers)
+    """
+    from tests.helpers.auth_helper import get_auth_headers
+
+    return get_auth_headers
 
 
 @pytest.fixture(autouse=True)
 def clean_db(test_session):
     """Automatically clean database state before each test."""
-    # Delete all data in reverse dependency order
-    test_session.query(Message).delete()
-    test_session.query(Membership).delete()
-    test_session.query(DirectMessage).delete()
-    test_session.query(GroupChat).delete()
-    test_session.query(Chat).delete()
-    test_session.query(User).delete()
-    test_session.commit()
+    try:
+        # Delete all data in reverse dependency order
+        test_session.query(Message).delete()
+        test_session.query(Membership).delete()
+        test_session.query(DirectMessage).delete()
+        test_session.query(GroupChat).delete()
+        test_session.query(Chat).delete()
+        test_session.query(User).delete()
+        test_session.commit()
+    except Exception:
+        # If tables don't exist yet, just pass
+        test_session.rollback()
+        pass
 
 
 @pytest.fixture

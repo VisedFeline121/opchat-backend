@@ -280,3 +280,124 @@ class ChatRepo(BaseRepo):
                 operation_name="get_chat_members",
             ),
         )
+
+    def _get_chat_with_members_implementation(
+        self, session: Session, chat_id: UUID
+    ) -> Optional[Chat]:
+        """Implementation of chat retrieval with members loaded."""
+        from sqlalchemy.orm import joinedload
+
+        return cast(
+            Optional[Chat],
+            session.query(Chat)
+            .options(joinedload(Chat.memberships))
+            .filter(Chat.id == chat_id)
+            .one_or_none(),
+        )
+
+    def get_chat_with_members(
+        self, chat_id: UUID, session: Optional[Session] = None
+    ) -> Optional[Chat]:
+        """Get a chat by ID with members loaded."""
+        return cast(
+            Optional[Chat],
+            self._execute_with_session(
+                lambda s: self._get_chat_with_members_implementation(s, chat_id),
+                session=session,
+                operation_name="get_chat_with_members",
+            ),
+        )
+
+    def _validate_users_exist_implementation(
+        self, session: Session, user_ids: List[UUID]
+    ) -> List[UUID]:
+        """Implementation of user existence validation."""
+        from app.models.user import User
+
+        existing_users = session.query(User.id).filter(User.id.in_(user_ids)).all()
+        existing_user_ids = {user[0] for user in existing_users}
+
+        missing_user_ids = [uid for uid in user_ids if uid not in existing_user_ids]
+        if missing_user_ids:
+            raise ValueError(f"Users not found: {missing_user_ids}")
+
+        return user_ids
+
+    def validate_users_exist(
+        self, user_ids: List[UUID], session: Optional[Session] = None
+    ) -> List[UUID]:
+        """Validate that all user IDs exist in the database."""
+        return cast(
+            List[UUID],
+            self._execute_with_session(
+                lambda s: self._validate_users_exist_implementation(s, user_ids),
+                session=session,
+                operation_name="validate_users_exist",
+            ),
+        )
+
+    def _is_group_chat_implementation(self, session: Session, chat_id: UUID) -> bool:
+        """Implementation of group chat check."""
+        chat = cast(
+            Optional[Chat], session.query(Chat).filter(Chat.id == chat_id).one_or_none()
+        )
+        return bool(chat is not None and chat.type == "group")
+
+    def is_group_chat(self, chat_id: UUID, session: Optional[Session] = None) -> bool:
+        """Check if a chat is a group chat."""
+        return cast(
+            bool,
+            self._execute_with_session(
+                lambda s: self._is_group_chat_implementation(s, chat_id),
+                session=session,
+                operation_name="is_group_chat",
+            ),
+        )
+
+    def _is_direct_message_implementation(
+        self, session: Session, chat_id: UUID
+    ) -> bool:
+        """Implementation of direct message check."""
+        chat = cast(
+            Optional[Chat], session.query(Chat).filter(Chat.id == chat_id).one_or_none()
+        )
+        return bool(chat is not None and chat.type == "dm")
+
+    def is_direct_message(
+        self, chat_id: UUID, session: Optional[Session] = None
+    ) -> bool:
+        """Check if a chat is a direct message."""
+        return cast(
+            bool,
+            self._execute_with_session(
+                lambda s: self._is_direct_message_implementation(s, chat_id),
+                session=session,
+                operation_name="is_direct_message",
+            ),
+        )
+
+    def _get_user_role_in_chat_implementation(
+        self, session: Session, chat_id: UUID, user_id: UUID
+    ) -> Optional[MemberRole]:
+        """Implementation of user role retrieval in chat."""
+        membership = (
+            session.query(Membership)
+            .filter(Membership.chat_id == chat_id, Membership.user_id == user_id)
+            .first()
+        )
+        return cast(Optional[MemberRole], membership.role if membership else None)
+
+    def get_user_role_in_chat(
+        self, chat_id: UUID, user_id: UUID, session: Optional[Session] = None
+    ) -> Optional[MemberRole]:
+        """Get the role of a user in a chat."""
+        return cast(
+            Optional[MemberRole],
+            self._execute_with_session(
+                lambda s: self._get_user_role_in_chat_implementation(
+                    s, chat_id, user_id
+                ),
+                session=session,
+                operation_name="get_user_role_in_chat",
+            ),
+        )
